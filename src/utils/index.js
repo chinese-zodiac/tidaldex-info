@@ -38,29 +38,21 @@ export function getTimeframe(timeWindow) {
 }
 
 export function getPoolLink(token0Address, token1Address = null, remove = false) {
-  if (!token1Address) {
-    return (
-      `https://tidaldex.com/` +
-      (remove ? `remove` : `add`) +
-      `/${token0Address === '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' ? 'BNB' : token0Address}/${'BNB'}`
-    )
-  } else {
-    return (
-      `https://tidaldex.com/` +
-      (remove ? `remove` : `add`) +
-      `/${token0Address === '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' ? 'BNB' : token0Address}/${token1Address === '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' ? 'BNB' : token1Address
-      }`
-    )
-  }
+  const token0Display = token0Address === '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' ? 'BNB' : token0Address
+  const token1Display = token1Address
+    ? token1Address === '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' ? 'BNB' : token1Address
+    : 'BNB'
+
+  return `https://tidaldex.com/${remove ? 'remove' : 'add'}/${token0Display}/${token1Display}`
 }
 
 export function getSwapLink(token0Address, token1Address = null) {
+  const input = token0Address === '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' ? 'BNB' : token0Address
   if (!token1Address) {
-    return `https://tidaldex.com/swap?inputCurrency=${token0Address}`
-  } else {
-    return `https://tidaldex.com/swap?inputCurrency=${token0Address === '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' ? 'BNB' : token0Address
-      }&outputCurrency=${token1Address === '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' ? 'BNB' : token1Address}`
+    return `https://tidaldex.com/swap?inputCurrency=${input}`
   }
+  const output = token1Address === '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' ? 'BNB' : token1Address
+  return `https://tidaldex.com/swap?inputCurrency=${input}&outputCurrency=${output}`
 }
 
 export function getMiningPoolLink(token0Address) {
@@ -478,4 +470,42 @@ export function isEquivalent(a, b) {
     }
   }
   return true
+}
+
+/**
+ * Normalize outlier spikes in a daily time series.
+ * Replaces any value that is spikeMultiple times larger than BOTH adjacent values
+ * with the larger of its two neighbors.
+ *
+ * This helps remove erroneous single-day volume spikes without distorting trends.
+ *
+ * @param {Array<Object>} entries Array of day objects in chronological order
+ * @param {string} fieldName The numeric field on each entry to evaluate
+ * @param {number} spikeMultiple The threshold multiple to consider a spike (default 1000)
+ * @returns {Array<Object>} The same array reference with in-place adjustments
+ */
+export function filterVolumeSpikes(entries, fieldName = 'dailyVolumeUSD', spikeMultiple = 50) {
+  if (!Array.isArray(entries) || entries.length < 3) {
+    return entries
+  }
+
+  const MIN_SPIKE_VALUE_USD = 1_000_000
+  for (let i = 1; i < entries.length - 1; i++) {
+    const previousValue = parseFloat(entries[i - 1]?.[fieldName] ?? 0)
+    const nextValue = parseFloat(entries[i + 1]?.[fieldName] ?? 0)
+    const currentValue = parseFloat(entries[i]?.[fieldName] ?? 0)
+
+    // Only detect spikes when BOTH neighbors are positive and the day value is very large
+    if (
+      previousValue > 0 &&
+      nextValue > 0 &&
+      currentValue > MIN_SPIKE_VALUE_USD &&
+      (currentValue > spikeMultiple * previousValue || currentValue > spikeMultiple * nextValue)
+    ) {
+      const averagedNeighborValue = (previousValue + nextValue) / 2
+      entries[i][fieldName] = averagedNeighborValue
+    }
+  }
+
+  return entries
 }

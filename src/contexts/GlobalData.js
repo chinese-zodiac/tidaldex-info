@@ -9,6 +9,7 @@ import {
   getBlocksFromTimestamps,
   get2DayPercentChange,
   getTimeframe,
+  filterVolumeSpikes,
 } from '../utils'
 import {
   GLOBAL_DATA,
@@ -386,24 +387,53 @@ const getChartData = async (oldestDateToFetch, offsetData) => {
       }
     }
 
-    // format weekly data for weekly sized chunks
+    // sort chronologically
     data = data.sort((a, b) => (parseInt(a.date) > parseInt(b.date) ? 1 : -1))
-    let startIndexWeekly = -1
-    let currentWeek = -1
 
-    data.forEach((entry, i) => {
-      const date = data[i].date
-
-      // hardcoded fix for offset volume
-      offsetData &&
-        !checked &&
+    // Apply any custom offset adjustments to daily volume once before aggregations
+    if (offsetData && !checked) {
+      data.forEach((entry, i) => {
+        const date = data[i].date
         offsetData.map((dayData) => {
           if (dayData[date]) {
             data[i].dailyVolumeUSD = parseFloat(data[i].dailyVolumeUSD) - parseFloat(dayData[date].dailyVolumeUSD)
           }
           return true
         })
+      })
+    }
 
+    // Debug logging for anomalous days to aid investigation in development
+    if (process.env.NODE_ENV !== 'production') {
+      data.forEach((entry, i) => {
+        if (i === 0 || i === data.length - 1) return
+        const prev = parseFloat(data[i - 1]?.dailyVolumeUSD ?? 0)
+        const curr = parseFloat(entry?.dailyVolumeUSD ?? 0)
+        const next = parseFloat(data[i + 1]?.dailyVolumeUSD ?? 0)
+        const ratioPrev = prev > 0 ? curr / prev : Infinity
+        const ratioNext = next > 0 ? curr / next : Infinity
+        if ((prev > 0 && next > 0 && (ratioPrev >= 1000 && ratioNext >= 1000)) || curr > 1_000_000) {
+          // eslint-disable-next-line no-console
+          console.log('[SpikeCheck][GlobalDaily]', {
+            dateISO: new Date(entry.date * 1000).toISOString(),
+            prev,
+            curr,
+            next,
+            ratioPrev,
+            ratioNext,
+          })
+        }
+      })
+    }
+
+    // Remove erroneous single-day spikes from daily volume series
+    data = filterVolumeSpikes(data, 'dailyVolumeUSD', 50)
+
+    // format weekly data for weekly sized chunks
+    let startIndexWeekly = -1
+    let currentWeek = -1
+
+    data.forEach((entry, i) => {
       const week = dayjs.utc(dayjs.unix(data[i].date)).week()
       if (week !== currentWeek) {
         currentWeek = week

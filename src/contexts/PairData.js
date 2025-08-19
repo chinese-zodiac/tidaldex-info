@@ -23,6 +23,7 @@ import {
   getBlocksFromTimestamps,
   getTimestampsForChanges,
   splitQuery,
+  filterVolumeSpikes,
 } from '../utils'
 import { timeframeOptions, TRACKED_OVERRIDES_PAIRS, TRACKED_OVERRIDES_TOKENS } from '../constants'
 import { useLatestBlocks } from './Application'
@@ -397,6 +398,32 @@ const getPairChartData = async (pairAddress) => {
     }
 
     data = data.sort((a, b) => (parseInt(a.date) > parseInt(b.date) ? 1 : -1))
+
+    if (process.env.NODE_ENV !== 'production') {
+      data.forEach((entry, i) => {
+        if (i === 0 || i === data.length - 1) return
+        const prev = parseFloat(data[i - 1]?.dailyVolumeUSD ?? 0)
+        const curr = parseFloat(entry?.dailyVolumeUSD ?? 0)
+        const next = parseFloat(data[i + 1]?.dailyVolumeUSD ?? 0)
+        const ratioPrev = prev > 0 ? curr / prev : Infinity
+        const ratioNext = next > 0 ? curr / next : Infinity
+        if ((prev > 0 && next > 0 && (ratioPrev >= 1000 && ratioNext >= 1000)) || curr > 1_000_000) {
+          // eslint-disable-next-line no-console
+          console.log('[SpikeCheck][PairDaily]', {
+            pairAddress,
+            dateISO: new Date(entry.date * 1000).toISOString(),
+            prev,
+            curr,
+            next,
+            ratioPrev,
+            ratioNext,
+          })
+        }
+      })
+    }
+
+    // Remove erroneous single-day spikes from daily volume series
+    data = filterVolumeSpikes(data, 'dailyVolumeUSD', 50)
   } catch (e) {
     console.log(e)
   }
