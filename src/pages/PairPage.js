@@ -37,7 +37,7 @@ import { Bookmark, PlusCircle, AlertCircle } from 'react-feather'
 import FormattedName from '../components/FormattedName'
 import { useListedTokens } from '../contexts/Application'
 import HoverText from '../components/HoverText'
-import { UNTRACKED_COPY, PAIR_BLACKLIST, BLOCKED_WARNINGS, FEE_RATE } from '../constants'
+import { UNTRACKED_COPY, PAIR_BLACKLIST, BLOCKED_WARNINGS } from '../constants'
 
 const DashboardWrapper = styled.div`
   width: 100%;
@@ -154,14 +154,6 @@ function PairPage({ pairAddress, history }) {
 
   const showUSDWaning = usingUntrackedLiquidity | usingUtVolume
 
-  // get fees
-  const fees =
-    oneDayVolumeUSD || oneDayVolumeUSD === 0
-      ? usingUtVolume
-        ? formattedNum(oneDayVolumeUntracked * FEE_RATE, true)
-        : formattedNum(oneDayVolumeUSD * FEE_RATE, true)
-      : '-'
-
   // token data for usd
   const [ethPrice] = useEthPrice()
   const token0USD =
@@ -203,7 +195,7 @@ function PairPage({ pairAddress, history }) {
             <TYPE.light style={{ textAlign: 'center' }}>
               {BLOCKED_WARNINGS[pairAddress] ?? `This pair is not supported.`}
             </TYPE.light>
-            <Link external={true} href={'https://bscscan.io/address/' + pairAddress}>{`More about ${shortenAddress(
+            <Link external={true} href={'https://bscscan.com/address/' + pairAddress}>{`More about ${shortenAddress(
               pairAddress
             )}`}</Link>
           </AutoColumn>
@@ -218,7 +210,14 @@ function PairPage({ pairAddress, history }) {
       <span />
       <Warning
         type={'pair'}
-        show={!dismissed && listedTokens && !(listedTokens.includes(token0?.id) && listedTokens.includes(token1?.id))}
+        show={
+          !dismissed &&
+          Array.isArray(listedTokens) &&
+          !(
+            listedTokens.some((t) => (t?.address || t)?.toLowerCase?.() === token0?.id?.toLowerCase?.()) &&
+            listedTokens.some((t) => (t?.address || t)?.toLowerCase?.() === token1?.id?.toLowerCase?.())
+          )
+        }
         setShow={markAsDismissed}
         address={pairAddress}
       />
@@ -231,7 +230,12 @@ function PairPage({ pairAddress, history }) {
         </RowBetween>
         <WarningGrouping
           disabled={
-            !dismissed && listedTokens && !(listedTokens.includes(token0?.id) && listedTokens.includes(token1?.id))
+            !dismissed &&
+            Array.isArray(listedTokens) &&
+            !(
+              listedTokens.some((t) => (t?.address || t)?.toLowerCase?.() === token0?.id?.toLowerCase?.()) &&
+              listedTokens.some((t) => (t?.address || t)?.toLowerCase?.() === token1?.id?.toLowerCase?.())
+            )
           }
         >
           <DashboardWrapper>
@@ -373,20 +377,7 @@ function PairPage({ pairAddress, history }) {
                     </RowBetween>
                   </AutoColumn>
                 </Panel>
-                <Panel style={{ height: '100%' }}>
-                  <AutoColumn gap="20px">
-                    <RowBetween>
-                      <TYPE.main>Fees (24hrs)</TYPE.main>
-                      <div />
-                    </RowBetween>
-                    <RowBetween align="flex-end">
-                      <TYPE.main fontSize={'1.5rem'} lineHeight={1} fontWeight={500}>
-                        {fees}
-                      </TYPE.main>
-                      <TYPE.main>{volumeChange}</TYPE.main>
-                    </RowBetween>
-                  </AutoColumn>
-                </Panel>
+                
                 <Panel style={{ height: '100%' }}>
                   <AutoColumn gap="20px">
                     <RowBetween>
@@ -500,7 +491,7 @@ function PairPage({ pairAddress, history }) {
                     </AutoRow>
                   </Column>
                   <ButtonLight color={backgroundColor}>
-                    <Link color={backgroundColor} external href={'https://bscscan.io/address/' + pairAddress}>
+                    <Link color={backgroundColor} external href={'https://bscscan.com/address/' + pairAddress}>
                       View on Bscscan ↗
                     </Link>
                   </ButtonLight>

@@ -1,12 +1,10 @@
-import React, { useState } from 'react'
+import React from 'react'
 import styled from 'styled-components'
 import { RowFixed, RowBetween } from '../Row'
 import { useMedia } from 'react-use'
 import { useGlobalData, useEthPrice } from '../../contexts/GlobalData'
 import { formattedNum, localNumber } from '../../utils'
-import { FEE_RATE } from '../../constants'
 
-import UniPrice from '../UniPrice'
 import { TYPE } from '../../Theme'
 
 const Header = styled.div`
@@ -26,30 +24,17 @@ export default function GlobalStats() {
   const below400 = useMedia('(max-width: 400px)')
   const below816 = useMedia('(max-width: 816px)')
 
-  const [showPriceCard, setShowPriceCard] = useState(false)
-
-  const { oneDayVolumeUSD, oneDayTxns, pairCount } = useGlobalData()
+  const { oneDayTxns, pairCount } = useGlobalData()
   const [ethPrice] = useEthPrice()
   const formattedEthPrice = ethPrice ? formattedNum(ethPrice, true) : '-'
-  const oneDayFees = oneDayVolumeUSD ? formattedNum(oneDayVolumeUSD * FEE_RATE, true) : ''
 
   return (
     <Header>
       <RowBetween style={{ padding: below816 ? '0.5rem' : '.5rem' }}>
         <RowFixed>
           {!below400 && (
-            <TYPE.main
-              mr={'1rem'}
-              onMouseEnter={() => {
-                setShowPriceCard(true)
-              }}
-              onMouseLeave={() => {
-                setShowPriceCard(false)
-              }}
-              style={{ position: 'relative' }}
-            >
-              ETH Price: <Medium>{formattedEthPrice}</Medium>
-              {showPriceCard && <UniPrice />}
+            <TYPE.main mr={'1rem'}>
+              BNB Price: <Medium>{formattedEthPrice}</Medium>
             </TYPE.main>
           )}
 
@@ -63,11 +48,7 @@ export default function GlobalStats() {
               Pairs: <Medium>{localNumber(pairCount)}</Medium>
             </TYPE.main>
           )}
-          {!below1295 && (
-            <TYPE.main mr={'1rem'}>
-              Fees (24H): <Medium>{oneDayFees}</Medium>&nbsp;
-            </TYPE.main>
-          )}
+          
         </RowFixed>
       </RowBetween>
     </Header>

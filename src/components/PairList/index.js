@@ -9,12 +9,11 @@ import styled from 'styled-components'
 import { CustomLink } from '../Link'
 import { Divider } from '../../components'
 import { withRouter } from 'react-router-dom'
-import { formattedNum, formattedPercent } from '../../utils'
+import { formattedNum } from '../../utils'
 import DoubleTokenLogo from '../DoubleLogo'
 import FormattedName from '../FormattedName'
-import QuestionHelper from '../QuestionHelper'
 import { TYPE } from '../../Theme'
-import { PAIR_BLACKLIST, FEE_RATE } from '../../constants'
+import { PAIR_BLACKLIST } from '../../constants'
 import { AutoColumn } from '../Column'
 
 dayjs.extend(utc)
@@ -68,13 +67,13 @@ const DashGrid = styled.div`
 
   @media screen and (min-width: 1080px) {
     padding: 0 1.125rem;
-    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 1fr;
-    grid-template-areas: ' name liq vol volWeek fees apy';
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    grid-template-areas: ' name liq vol volWeek';
   }
 
   @media screen and (min-width: 1200px) {
-    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 1fr;
-    grid-template-areas: ' name liq vol volWeek fees apy';
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    grid-template-areas: ' name liq vol volWeek';
   }
 `
 
@@ -108,8 +107,6 @@ const SORT_FIELD = {
   LIQ: 0,
   VOL: 1,
   VOL_7DAYS: 3,
-  FEES: 4,
-  APY: 5,
 }
 
 const FIELD_TO_VALUE = (field, useTracked) => {
@@ -120,8 +117,6 @@ const FIELD_TO_VALUE = (field, useTracked) => {
       return useTracked ? 'oneDayVolumeUSD' : 'oneDayVolumeUntracked'
     case SORT_FIELD.VOL_7DAYS:
       return useTracked ? 'oneWeekVolumeUSD' : 'oneWeekVolumeUntracked'
-    case SORT_FIELD.FEES:
-      return useTracked ? 'oneDayVolumeUSD' : 'oneDayVolumeUntracked'
     default:
       return 'trackedReserveUSD'
   }
@@ -182,20 +177,14 @@ function PairList({ pairs, color, disbaleLinks, maxItems = 10, useTracked = fals
         true
       )
 
-      const apy = formattedPercent(
-        ((pairData.oneDayVolumeUSD ? pairData.oneDayVolumeUSD : pairData.oneDayVolumeUntracked) * FEE_RATE * 365 * 100) /
-          (pairData.oneDayVolumeUSD ? pairData.trackedReserveUSD : pairData.reserveUSD)
-      )
+      
 
       const weekVolume = formattedNum(
         pairData.oneWeekVolumeUSD ? pairData.oneWeekVolumeUSD : pairData.oneWeekVolumeUntracked,
         true
       )
 
-      const fees = formattedNum(
-        pairData.oneDayVolumeUSD ? pairData.oneDayVolumeUSD * FEE_RATE : pairData.oneDayVolumeUntracked * FEE_RATE,
-        true
-      )
+      
 
       return (
         <DashGrid style={{ height: '48px' }} disbaleLinks={disbaleLinks} focus={true}>
@@ -219,12 +208,6 @@ function PairList({ pairs, color, disbaleLinks, maxItems = 10, useTracked = fals
           <DataText area="liq">{formatDataText(liquidity, pairData.trackedReserveUSD)}</DataText>
           <DataText area="vol">{formatDataText(volume, pairData.oneDayVolumeUSD)}</DataText>
           {!below1080 && <DataText area="volWeek">{formatDataText(weekVolume, pairData.oneWeekVolumeUSD)}</DataText>}
-          {!below1080 && <DataText area="fees">{formatDataText(fees, pairData.oneDayVolumeUSD)}</DataText>}
-          {!below1080 && (
-            <DataText area="apy">
-              {formatDataText(apy, pairData.oneDayVolumeUSD, pairData.oneDayVolumeUSD === 0)}
-            </DataText>
-          )}
         </DashGrid>
       )
     } else {
@@ -241,11 +224,7 @@ function PairList({ pairs, color, disbaleLinks, maxItems = 10, useTracked = fals
       .sort((addressA, addressB) => {
         const pairA = pairs[addressA]
         const pairB = pairs[addressB]
-        if (sortedColumn === SORT_FIELD.APY) {
-          const apy0 = parseFloat(pairA.oneDayVolumeUSD * FEE_RATE * 356 * 100) / parseFloat(pairA.reserveUSD)
-          const apy1 = parseFloat(pairB.oneDayVolumeUSD * FEE_RATE * 356 * 100) / parseFloat(pairB.reserveUSD)
-          return apy0 > apy1 ? (sortDirection ? -1 : 1) * 1 : (sortDirection ? -1 : 1) * -1
-        }
+        
         return parseFloat(pairA[FIELD_TO_VALUE(sortedColumn, useTracked)]) >
           parseFloat(pairB[FIELD_TO_VALUE(sortedColumn, useTracked)])
           ? (sortDirection ? -1 : 1) * 1
@@ -310,32 +289,9 @@ function PairList({ pairs, color, disbaleLinks, maxItems = 10, useTracked = fals
           </Flex>
         )}
         {!below1080 && (
-          <Flex alignItems="center" justifyContent="flexEnd">
-            <ClickableText
-              area="fees"
-              onClick={(e) => {
-                setSortedColumn(SORT_FIELD.FEES)
-                setSortDirection(sortedColumn !== SORT_FIELD.FEES ? true : !sortDirection)
-              }}
-            >
-              Fees (24hr) {sortedColumn === SORT_FIELD.FEES ? (!sortDirection ? '↑' : '↓') : ''}
-            </ClickableText>
-          </Flex>
+          <></>
         )}
-        {!below1080 && (
-          <Flex alignItems="center" justifyContent="flexEnd">
-            <ClickableText
-              area="apy"
-              onClick={(e) => {
-                setSortedColumn(SORT_FIELD.APY)
-                setSortDirection(sortedColumn !== SORT_FIELD.APY ? true : !sortDirection)
-              }}
-            >
-              1y Fees / Liquidity {sortedColumn === SORT_FIELD.APY ? (!sortDirection ? '↑' : '↓') : ''}
-            </ClickableText>
-            <QuestionHelper text={'Based on 24hr volume annualized'} />
-          </Flex>
-        )}
+        
       </DashGrid>
       <Divider />
       <List p={0}>{!pairList ? <LocalLoader /> : pairList}</List>

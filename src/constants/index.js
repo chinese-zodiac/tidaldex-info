@@ -2,7 +2,7 @@ export const FACTORY_ADDRESS = '0x907e8c7d471877b4742da8aa53d257d0d565a47e'
 
 export const BUNDLE_ID = '0x01000000'
 
-export const FEE_RATE = 0.0019
+export const FEE_RATE = 0
 
 export const timeframeOptions = {
   WEEK: '1 week',
@@ -54,7 +54,7 @@ export const BLOCKED_WARNINGS = {
 /**
  * For tokens that cause erros on fee calculations
  */
-export const FEE_WARNING_TOKENS = ['0xd46ba6d942050d489dbd938a2c909a5d5039a161']
+export const FEE_WARNING_TOKENS = []
 
 export const UNTRACKED_COPY = 'Derived USD values may be inaccurate without liquid stablecoin or ETH pairings.'
 

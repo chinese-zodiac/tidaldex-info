@@ -16,7 +16,7 @@ import { PageWrapper, ContentWrapper, StyledIcon, ButtonWrapper } from '../compo
 import DoubleTokenLogo from '../components/DoubleLogo'
 import { Bookmark, Activity } from 'react-feather'
 import Link from '../components/Link'
-import { FEE_WARNING_TOKENS, FEE_RATE } from '../constants'
+ 
 import { BasicLink } from '../components/Link'
 import { useMedia } from 'react-use'
 import Search from '../components/Search'
@@ -106,19 +106,10 @@ function AccountPage({ account }) {
       : 0
   }, [transactions])
 
-  // if any position has token from fee warning list, show warning
+  // fees not applicable
   const [showWarning, setShowWarning] = useState(false)
   useEffect(() => {
-    if (positions) {
-      for (let i = 0; i < positions.length; i++) {
-        if (
-          FEE_WARNING_TOKENS.includes(positions[i].pair.token0.id) ||
-          FEE_WARNING_TOKENS.includes(positions[i].pair.token1.id)
-        ) {
-          setShowWarning(true)
-        }
-      }
-    }
+    setShowWarning(false)
   }, [positions])
 
   // settings for list view and dropdowns
@@ -128,9 +119,7 @@ function AccountPage({ account }) {
 
   const dynamicPositions = activePosition ? [activePosition] : positions
 
-  const aggregateFees = dynamicPositions?.reduce(function (total, position) {
-    return total + position.fees.sum
-  }, 0)
+  const aggregateFees = 0
 
   const positionValue = useMemo(() => {
     return dynamicPositions
@@ -166,7 +155,7 @@ function AccountPage({ account }) {
         <RowBetween>
           <TYPE.body>
             <BasicLink to="/accounts">{'Accounts '}</BasicLink>→{' '}
-            <Link lineHeight={'145.23%'} href={'https://bscscan.io/address/' + account} target="_blank">
+            <Link lineHeight={'145.23%'} href={'https://bscscan.com/address/' + account} target="_blank">
               {' '}
               {account?.slice(0, 42)}{' '}
             </Link>
@@ -177,7 +166,7 @@ function AccountPage({ account }) {
           <RowBetween>
             <span>
               <TYPE.header fontSize={24}>{account?.slice(0, 6) + '...' + account?.slice(38, 42)}</TYPE.header>
-              <Link lineHeight={'145.23%'} href={'https://bscscan.io/address/' + account} target="_blank">
+              <Link lineHeight={'145.23%'} href={'https://bscscan.com/address/' + account} target="_blank">
                 <TYPE.main fontSize={14}>View on Bscscan</TYPE.main>
               </Link>
             </span>
@@ -192,7 +181,7 @@ function AccountPage({ account }) {
           </RowBetween>
         </Header>
         <DashboardWrapper>
-          {showWarning && <Warning>Fees cannot currently be calculated for pairs that include AMPL.</Warning>}
+          
           {!hideLPContent && (
             <DropdownWrapper>
               <ButtonDropdown width="100%" onClick={() => setShowDropdown(!showDropdown)} open={showDropdown}>
@@ -265,7 +254,7 @@ function AccountPage({ account }) {
               <AutoRow gap="20px">
                 <AutoColumn gap="10px">
                   <RowBetween>
-                    <TYPE.body>Liquidity (Including Fees)</TYPE.body>
+                    <TYPE.body>Liquidity</TYPE.body>
                     <div />
                   </RowBetween>
                   <RowFixed align="flex-end">
@@ -275,17 +264,6 @@ function AccountPage({ account }) {
                         : positionValue === 0
                         ? formattedNum(0, true)
                         : '-'}
-                    </TYPE.header>
-                  </RowFixed>
-                </AutoColumn>
-                <AutoColumn gap="10px">
-                  <RowBetween>
-                    <TYPE.body>Fees Earned (Cumulative)</TYPE.body>
-                    <div />
-                  </RowBetween>
-                  <RowFixed align="flex-end">
-                    <TYPE.header fontSize={'24px'} lineHeight={1} color={aggregateFees && 'green'}>
-                      {aggregateFees ? formattedNum(aggregateFees, true, true) : '-'}
                     </TYPE.header>
                   </RowFixed>
                 </AutoColumn>
@@ -354,12 +332,7 @@ function AccountPage({ account }) {
                 <TYPE.header fontSize={24}>{totalSwappedUSD ? formattedNum(totalSwappedUSD, true) : '-'}</TYPE.header>
                 <TYPE.main>Total Value Swapped</TYPE.main>
               </AutoColumn>
-              <AutoColumn gap="8px">
-                <TYPE.header fontSize={24}>
-                  {totalSwappedUSD ? formattedNum(totalSwappedUSD * FEE_RATE, true) : '-'}
-                </TYPE.header>
-                <TYPE.main>Total Fees Paid</TYPE.main>
-              </AutoColumn>
+              
               <AutoColumn gap="8px">
                 <TYPE.header fontSize={24}>{transactionCount ? transactionCount : '-'}</TYPE.header>
                 <TYPE.main>Total Transactions</TYPE.main>
