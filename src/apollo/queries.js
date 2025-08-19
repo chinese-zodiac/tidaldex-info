@@ -113,22 +113,30 @@ export const POSITIONS_BY_BLOCK = (account, blocks) => {
 }
 
 export const PRICES_BY_BLOCK = (tokenAddress, blocks) => {
+  // Ensure BUNDLE_ID is properly converted to a string literal for GraphQL
+  const bundleId = typeof BUNDLE_ID === 'number' ? `"${BUNDLE_ID.toString()}"` : `"${BUNDLE_ID}"`
+
   let queryString = 'query blocks {'
-  queryString += blocks.map(
-    (block) => `
+  queryString += blocks
+    .map(
+      (block) => `
       t${block.timestamp}:token(id:"${tokenAddress}", block: { number: ${block.number} }) { 
         derivedETH
       }
     `
-  )
+    )
+    .join('')
+
   queryString += ','
-  queryString += blocks.map(
-    (block) => `
-      b${block.timestamp}: bundle(id:"1", block: { number: ${block.number} }) { 
+  queryString += blocks
+    .map(
+      (block) => `
+      b${block.timestamp}: bundle(id:${bundleId}, block: { number: ${block.number} }) { 
         ethPrice
       }
     `
-  )
+    )
+    .join('')
 
   queryString += '}'
   return gql(queryString)
