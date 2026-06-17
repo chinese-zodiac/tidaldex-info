@@ -1,5 +1,6 @@
 [phases.setup]
 nixPkgs = ["nodejs_18"]
+
 aptPkgs = ["python3", "make", "g++"]
 
 [phases.install]
@@ -11,4 +12,4 @@ cmds = [
 ]
 
 [phases.build]
-cmds = ["CI=false yarn build"]
+cmds = ["CI=false NODE_OPTIONS=--openssl-legacy-provider yarn build"]
