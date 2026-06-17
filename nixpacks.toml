@@ -1,8 +1,12 @@
 [phases.setup]
-nixPkgs = ["nodejs_18", "python311", "python311Packages.setuptools", "gcc", "gnumake"]
+nixPkgs = ["nodejs_18", "yarn-1_x", "python311", "python311Packages.setuptools", "gcc", "gnumake"]
 
 [phases.install]
-cmds = ["corepack enable", "corepack prepare yarn@1.22.21 --activate", "yarn install --frozen-lockfile"]
+cmds = [
+  "corepack enable",
+  "corepack prepare yarn@1.22.21 --activate",
+  "yarn install --frozen-lockfile"
+]
 
 [phases.build]
-cmds = ["yarn build && yarn export"]
+cmds = ["yarn build"]
